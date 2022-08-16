@@ -19,35 +19,37 @@
 #
 # Prerequisites:
 # 1. longhorn.py from: https://raw.githubusercontent.com/longhorn/longhorn-tests/master/manager/integration/tests/longhorn.py
-# 2. requests library from: `pip install requests`
 
-import coloredlogs
-from decouple import config
+
 import datetime
 import logging
-import longhorn
-import requests
 import threading
+import coloredlogs
+from decouple import config
+import longhorn
 
 # Constants
 date_format = '%Y-%m-%dT%H:%M:%SZ'
 mib_conversion_factor = 1 / 1024 / 1024
 current_date = datetime.datetime.now()
 
-longhorn_url = config('LONGHORN_URL','http://localhost:8080/v1')
+longhorn_url = config('LONGHORN_URL', 'http://localhost:8080/v1')
 
 # Variables; change according to your needs
 delete_strings = ['c-6fffho', 'c-b8sdpg','kubestr']
-delete_age_days = config('DELETE_AGE_DAY',14)
+delete_age_days = config('DELETE_AGE_DAY', 14)
 
 logger = logging.getLogger()
 coloredlogs.install(level=config('log_level',default='debug'),fmt='[%(asctime)s]: %(message)s')
 
 def delete_snapshot(volume, snapshot, reason):
-    logger.error('Deleting {reason} snapshot {name} created on {created} with size {size:.1f} MiB'.format(
+    if snapshot.created:
+        created_date = datetime.datetime.strptime(snapshot.created, date_format).strftime('%Y-%m-%d')
+    else: created_date=''
+    logger.warning('Deleting {reason} snapshot {name} created on {created} with size {size:.1f} MiB'.format(
                 name=snapshot.name,
                 reason=reason,
-                created=datetime.datetime.strptime(snapshot.created, date_format).strftime('%Y-%m-%d'),
+                created=created_date,
                 size=int(snapshot.size) * mib_conversion_factor
             ))
     try:
@@ -62,9 +64,14 @@ def process_snapshot(volume, snapshot):
         if delete_string in snapshot.name:
             delete_snapshot(volume, snapshot, 'orphaned')
             return True
-    snapshot_date = datetime.datetime.strptime(snapshot.created, date_format)
-    if (current_date - snapshot_date).days > 30:
-        delete_snapshot(volume, snapshot, 'stale')
+    if snapshot.created:
+        snapshot_date = datetime.datetime.strptime(snapshot.created, date_format)
+        if (current_date - snapshot_date).days > delete_age_days:
+            delete_snapshot(volume, snapshot, 'stale')
+            return True
+    else:
+        logger.debug('Snapshot creation date empty, deleting')
+        delete_snapshot(volume, snapshot, 'invalid creation date')
         return True
     logger.warning('Ignoring snapshot: {}'.format(snapshot.name))
     return False
