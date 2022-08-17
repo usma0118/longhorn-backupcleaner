@@ -15,8 +15,7 @@
 #
 # Usage:
 # 1. Run `kubectl port-forward -n storage services/longhorn-frontend 8080:http`
-# 2. python cleanup-snapshots.py
-#
+
 # Prerequisites:
 # 1. longhorn.py from: https://raw.githubusercontent.com/longhorn/longhorn-tests/master/manager/integration/tests/longhorn.py
 
@@ -35,7 +34,8 @@ date_format = '%Y-%m-%dT%H:%M:%SZ'
 mib_conversion_factor = 1 / 1024 / 1024
 current_date = datetime.datetime.now()
 
-longhorn_url = config('LONGHORN_URL')
+longhorn_url = "http://{}/v1"
+longhorn_url=longhorn_url.format(config('LONGHORN_URL'))
 delete_age_days = config('DELETE_AGE_DAY', 14)
 
 delete_strings = ['c-6fffho', 'c-b8sdpg','kubestr']

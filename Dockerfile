@@ -24,6 +24,7 @@ FROM python-alpine3 as runtime
 
 #ENV delete_strings
 ENV DELETE_AGE_DAY=14
+ENV LONGHORN_URL=longhorn-frontend.longhorn.svc:8080
 ENV log_level="info"
 
 # Creates a non-root user with an explicit UID and adds permission to access the /app folder
@@ -38,4 +39,3 @@ WORKDIR /app
 USER longhorn
 
 ENTRYPOINT ["python", "main.py"]
-# CMD ["--monitor"]
