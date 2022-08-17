@@ -24,8 +24,10 @@
 import datetime
 import logging
 import threading
+
 import coloredlogs
 from decouple import config
+
 import longhorn
 
 # Constants
@@ -39,19 +41,19 @@ longhorn_url = config('LONGHORN_URL', 'http://localhost:8080/v1')
 delete_strings = ['c-6fffho', 'c-b8sdpg','kubestr']
 delete_age_days = config('DELETE_AGE_DAY', 14)
 
-logger = logging.getLogger()
-coloredlogs.install(level=config('log_level',default='debug'),fmt='[%(asctime)s]: %(message)s')
+logger = logging.getLogger('Loghorn backup cleaner')
+coloredlogs.install(level=config('log_level',default='INFO'),fmt='[%(asctime)s]: %(message)s')
 
 def delete_snapshot(volume, snapshot, reason):
     if snapshot.created:
         created_date = datetime.datetime.strptime(snapshot.created, date_format).strftime('%Y-%m-%d')
     else: created_date=''
     logger.warning('Deleting {reason} snapshot {name} created on {created} with size {size:.1f} MiB'.format(
-                name=snapshot.name,
-                reason=reason,
-                created=created_date,
-                size=int(snapshot.size) * mib_conversion_factor
-            ))
+        name=snapshot.name,
+        reason=reason,
+        created=created_date,
+        size=int(snapshot.size) * mib_conversion_factor
+        ))
     try:
         volume.snapshotDelete(name=snapshot.name)
     except longhorn.ApiError as e:
@@ -78,7 +80,7 @@ def process_snapshot(volume, snapshot):
 
 
 def process_volume(volume):
-    logger.info('Processing volume: {} in namespace: {}'.format(volume.name, volume.kubernetesStatus.namespace))
+    logger.info('Processing volume: {} for {} in namespace: {}'.format(volume.name,volume.kubernetesStatus.pvcName, volume.kubernetesStatus.namespace))
     if volume.lastBackup != '':
         logger.info('Last backup: {} on: {}'.format(volume.lastBackup,volume.lastBackupAt))
     try:
@@ -110,10 +112,8 @@ def process_cluster(client):
 
     for i, volume in enumerate(volumes):
         logger.warning('Processing volumeProgress: {:.1f}% ({}/{})'.format(
-          i / len(volumes) * 100,
-        i,
-        len(volumes),
-        ))
+            i / len(volumes) * 100,i,len(volumes),
+            ))
         process_volume(volume)
 
     logger.info('Finished volume snapshot cleanup')
