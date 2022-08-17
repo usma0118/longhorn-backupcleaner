@@ -35,7 +35,7 @@ date_format = '%Y-%m-%dT%H:%M:%SZ'
 mib_conversion_factor = 1 / 1024 / 1024
 current_date = datetime.datetime.now()
 
-longhorn_url = config('LONGHORN_URL', 'http://localhost:8080/v1')
+longhorn_url = config('LONGHORN_URL')
 
 # Variables; change according to your needs
 delete_strings = ['c-6fffho', 'c-b8sdpg','kubestr']
@@ -121,5 +121,5 @@ def process_cluster(client):
 
 if __name__ == '__main__':
     client = longhorn.Client(url=longhorn_url)
-    threading.current_thread().name = 'longhorn-backupCleaner'
+    threading.current_thread().name = 'longhorn backupCleaner'
     process_cluster(client)
