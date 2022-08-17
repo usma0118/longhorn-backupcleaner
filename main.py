@@ -36,10 +36,10 @@ mib_conversion_factor = 1 / 1024 / 1024
 current_date = datetime.datetime.now()
 
 longhorn_url = config('LONGHORN_URL')
-
-# Variables; change according to your needs
-delete_strings = ['c-6fffho', 'c-b8sdpg','kubestr']
 delete_age_days = config('DELETE_AGE_DAY', 14)
+
+delete_strings = ['c-6fffho', 'c-b8sdpg','kubestr']
+
 
 logger = logging.getLogger('Loghorn backup cleaner')
 coloredlogs.install(level=config('log_level',default='INFO'),fmt='[%(asctime)s]: %(message)s')
